@@ -1,0 +1,413 @@
+@import "tailwindcss";
+
+:root {
+  /*
+   * Brand palette — regal purple + amber gold
+   * Inspired by premium restaurant references (deep plum canvas, mustard CTAs).
+   * Token names kept for compatibility; values remapped site-wide.
+   */
+  --color-charcoal: #2a1548; /* Deep royal purple — nav, footer, dark sections */
+  --color-tomato: #f5b800; /* Amber gold — primary CTAs & key highlights */
+  --color-cream: #f4effa; /* Soft lilac mist — pages & light sections */
+  --color-gold: #e8c15a; /* Champagne gold — icons, badges, details */
+  --color-surface: #ffffff; /* Card background — menu/food cards */
+  --site-header-height: 4.25rem;
+
+  /* RGB companions for shadows / gradients (match brand hex) */
+  --rgb-charcoal: 42, 21, 72;
+  --rgb-tomato: 245, 184, 0;
+  --rgb-gold: 232, 193, 90;
+
+  /* Semantic aliases */
+  --color-primary-bg: var(--color-charcoal);
+  --color-accent: var(--color-tomato);
+  --color-light-bg: var(--color-cream);
+  --color-secondary-accent: var(--color-gold);
+  --color-card: var(--color-surface);
+
+  /* Derived from brand colors */
+  --color-cream-deep: color-mix(in srgb, var(--color-cream) 86%, var(--color-charcoal));
+  --color-ink: var(--color-charcoal);
+  --color-muted: color-mix(in srgb, var(--color-charcoal) 55%, var(--color-cream));
+  --color-olive: var(--color-gold); /* legacy token → secondary accent */
+  --color-border: color-mix(in srgb, var(--color-charcoal) 12%, transparent);
+  /* Amber CTA hovers — deepen toward warm bronze, not purple mud */
+  --color-tomato-deep: #e0a600;
+  --color-tomato-deeper: #c89200;
+  --color-gold-deep: color-mix(in srgb, var(--color-gold) 78%, var(--color-charcoal));
+  --color-charcoal-soft: color-mix(in srgb, var(--color-charcoal) 88%, var(--color-cream));
+  --background: var(--color-cream);
+  --foreground: var(--color-ink);
+  --space-section: 4.5rem;
+  --space-section-lg: 6rem;
+  --radius-control: 0.5rem;
+  --radius-card: 0.875rem;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --shadow-card: 0 1px 2px color-mix(in srgb, var(--color-charcoal) 6%, transparent),
+    0 12px 28px -18px color-mix(in srgb, var(--color-charcoal) 22%, transparent);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--foreground);
+  --color-border: color-mix(in srgb, var(--color-charcoal) 12%, transparent);
+  --color-muted-foreground: var(--color-muted);
+  --color-cream: var(--color-cream);
+  --color-charcoal: var(--color-charcoal);
+  --color-tomato: var(--color-tomato);
+  --color-olive: var(--color-olive);
+  --color-gold: var(--color-gold);
+  --color-ink: var(--color-ink);
+  --color-muted: var(--color-muted);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --font-naskh: var(--font-naskh);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Match footer so overscroll / trailing canvas below the page stays charcoal */
+  background-color: #2a1548;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  min-height: 100dvh;
+  background-color: var(--color-cream);
+  background-image:
+    radial-gradient(
+      ellipse 90% 55% at 50% -10%,
+      color-mix(in srgb, var(--color-gold) 10%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 55% 40% at 100% 30%,
+      color-mix(in srgb, var(--color-charcoal) 6%, transparent),
+      transparent 55%
+    );
+  color: var(--color-ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  caret-color: var(--color-tomato);
+}
+
+[dir="rtl"] body {
+  font-family: var(--font-naskh), var(--font-body), system-ui, sans-serif;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-tomato) 28%, transparent);
+  color: var(--color-ink);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cream-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-charcoal) 28%, transparent);
+  border-radius: 999px;
+  border: 2px solid var(--color-cream-deep);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-charcoal) 42%, transparent);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+/* Dark header nav — light text on royal purple */
+.site-header nav[aria-label="Primary"] a {
+  color: rgba(244, 239, 250, 0.92) !important;
+}
+
+.site-header nav[aria-label="Primary"] a:hover,
+.site-header nav[aria-label="Primary"] a:focus-visible {
+  color: #ffffff !important;
+}
+
+.site-header nav[aria-label="Primary"] a[aria-current="page"] {
+  color: #ffffff !important;
+}
+
+/* Active pill on mobile sheet — charcoal ink on gold, not white */
+.site-header nav[aria-label="Primary"][data-collapsed] a[aria-current="page"] {
+  color: #2a1548 !important;
+}
+
+img {
+  max-width: 100%;
+}
+
+/* Plain <img> keep aspect ratio. Tailwind preflight sets height:auto on all images,
+   which fights Next/Image sizing — restore fill images and silence aspect warnings. */
+img:not([data-nimg]) {
+  height: auto;
+}
+
+img[data-nimg="1"] {
+  width: auto;
+  height: auto;
+}
+
+img[data-nimg="fill"] {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+}
+
+/* Lightweight UI transitions (Transitions.dev principles) */
+@media (prefers-reduced-motion: no-preference) {
+  .site-header a,
+  .site-header button {
+    transition-property: color, background-color, border-color, opacity, transform, box-shadow;
+    transition-duration: 200ms;
+    transition-timing-function: var(--ease-out);
+  }
+}
+
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.heading-display {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.heading-section {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.body-measure {
+  max-width: 38rem;
+}
+
+.container-page {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-page {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --site-header-height: 4.75rem;
+  }
+}
+
+.section-pad {
+  padding-block: var(--space-section);
+}
+
+@media (min-width: 768px) {
+  .section-pad {
+    padding-block: var(--space-section-lg);
+  }
+}
+
+.gold-rule {
+  height: 1px;
+  width: 4.5rem;
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+}
+
+.texture-cream {
+  background-color: var(--color-cream);
+  background-image:
+    radial-gradient(
+      ellipse 80% 50% at 10% 0%,
+      color-mix(in srgb, var(--color-gold) 14%, transparent),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 90% 20%,
+      color-mix(in srgb, var(--color-charcoal) 7%, transparent),
+      transparent 50%
+    );
+}
+
+.texture-charcoal {
+  background-color: var(--color-charcoal);
+  background-image:
+    radial-gradient(
+      ellipse 70% 50% at 80% 10%,
+      color-mix(in srgb, var(--color-tomato) 20%, transparent),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 50% 40% at 10% 80%,
+      color-mix(in srgb, var(--color-gold) 16%, transparent),
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 40% 30% at 50% 50%,
+      color-mix(in srgb, #3d2263 55%, transparent),
+      transparent 70%
+    );
+}
+
+.prose-zaitoon h1,
+.prose-zaitoon h2,
+.prose-zaitoon h3 {
+  font-family: var(--font-display), Georgia, serif;
+  letter-spacing: -0.02em;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Testimonial marquee — zp-* names avoid Tailwind animate-* utility collision */
+@keyframes zp-marquee-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% - var(--gap, 1rem)));
+  }
+}
+
+@keyframes zp-marquee-y {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(-100% - var(--gap, 1rem)));
+  }
+}
+
+.zp-marquee {
+  animation: zp-marquee-x var(--duration, 20s) infinite linear;
+}
+
+.zp-marquee-vertical {
+  animation: zp-marquee-y var(--duration, 20s) linear infinite;
+}
+
+.zp-marquee-reverse {
+  animation-direction: reverse;
+}
+
+.zp-marquee-paused:hover .zp-marquee,
+.zp-marquee-paused:hover .zp-marquee-vertical {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zp-marquee,
+  .zp-marquee-vertical {
+    animation: none !important;
+  }
+}
+
+/* Hide stacked product layers until GSAP reveals them (avoids FOUC) */
+.product-scroll:not(.product-scroll--static) .product-panel:not(:first-child),
+.product-scroll:not(.product-scroll--static) .product-pizza:not(:first-child) {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Product scroll showcase — reduced-motion / static fallback */
+.product-scroll--static .product-stage {
+  min-height: 0;
+}
+
+.product-scroll--static .product-copy-stack {
+  display: grid;
+  gap: 2.5rem;
+  min-height: 0;
+}
+
+.product-scroll--static .product-panel {
+  position: relative !important;
+  inset: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+}
+
+.product-scroll--static .product-visual {
+  display: grid;
+}
+
+.product-scroll--static .product-pizza {
+  position: relative !important;
+  inset: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  aspect-ratio: 1;
+}
+
+.product-scroll--static .product-pizza:not(:first-child) {
+  display: none;
+}
+
+.product-scroll--static .product-progress-dot {
+  opacity: 0.35;
+  transform: scale(0.7);
+}
+
+.product-scroll--static .product-progress-dot:first-child {
+  opacity: 1;
+  transform: scale(1);
+}
+
