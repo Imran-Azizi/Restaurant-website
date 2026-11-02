@@ -163,6 +163,11 @@ a {
   color: #ffffff !important;
 }
 
+/* Active pill on mobile sheet — charcoal ink on gold, not white */
+.site-header nav[aria-label="Primary"][data-collapsed] a[aria-current="page"] {
+  color: #2a1548 !important;
+}
+
 img {
   max-width: 100%;
 }

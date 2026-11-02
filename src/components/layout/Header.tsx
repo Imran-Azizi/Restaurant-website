@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ShoppingBag } from "lucide-react";
 import PillNav from "@/components/PillNav";
@@ -28,6 +28,7 @@ export function Header() {
   const { itemCount, openCart } = useCart();
   const pathname = usePathname();
   const reduce = useReducedMotion();
+  const [menuOpen, setMenuOpen] = useState(false);
   const wa = getWhatsAppUrl("Hello Zaitoon Pizza!");
 
   const items = links.map((link) => ({
@@ -36,8 +37,14 @@ export function Header() {
   }));
 
   return (
-    <header className="site-header sticky top-0 z-50 overflow-x-clip border-b border-white/8 bg-[var(--color-charcoal)] shadow-[0_12px_32px_-24px_rgba(42,21,72,0.65)]">
-      <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:h-[4.75rem]">
+    <header
+      className={cn(
+        "site-header sticky top-0 z-50 border-b border-white/8 bg-[var(--color-charcoal)] shadow-[0_12px_32px_-24px_rgba(42,21,72,0.65)]",
+        menuOpen ? "overflow-visible" : "overflow-x-clip",
+      )}
+      data-menu-open={menuOpen ? "" : undefined}
+    >
+      <div className="relative z-[70] mx-auto flex h-[4.25rem] max-w-6xl items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:h-[4.75rem]">
         <Link
           href="/"
           className="relative z-[2] flex shrink-0 items-center"
@@ -72,11 +79,13 @@ export function Header() {
             barColor="transparent"
             intro
             collapse="auto"
+            onMenuToggle={setMenuOpen}
             style={
               {
                 "--pn-text": "rgba(244, 239, 250, 0.88)",
                 "--pn-strong": "#FFFFFF",
                 "--pn-row-hover": "rgba(245, 184, 0, 0.12)",
+                "--pn-edge": "rgba(255, 255, 255, 0.08)",
               } as CSSProperties
             }
             className={cn(

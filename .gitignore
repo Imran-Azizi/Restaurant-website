@@ -81,6 +81,13 @@ Desktop.ini
 .netlify
 
 # =========================
+# Env & secrets
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
 # Misc local artifacts
 # =========================
 *.pem

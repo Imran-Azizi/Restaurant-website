@@ -182,10 +182,12 @@ const LINE_TOP =
 const LINE_BOTTOM =
   'absolute left-0 top-[7px] h-[1.5px] w-full rounded-[2px] bg-current transition-[top,rotate] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[open]/nav:top-[4.25px] group-data-[open]/nav:-rotate-45 motion-reduce:transition-none';
 const PANEL =
-  'absolute inset-x-0 top-0 z-[1] box-border rounded-[24px] px-[6px] pb-[6px] pt-[calc(var(--pn-h)_+_10px)] group-data-[layout=joined]/nav:pt-[calc(var(--pn-h)_+_4px)]';
-const MENU = 'm-0 flex list-none flex-col gap-[2px] p-0';
+  'fixed inset-x-0 top-[var(--site-header-height,4.25rem)] z-[60] box-border max-h-[calc(100dvh_-_var(--site-header-height,4.25rem))] overflow-y-auto overscroll-contain border-b border-[color:var(--pn-edge)] px-4 pb-6 pt-3 [background:var(--pn-panel)] [box-shadow:var(--pn-panel-shadow)] [-webkit-backdrop-filter:none] [backdrop-filter:none]';
+const PANEL_BACKDROP =
+  'fixed inset-x-0 bottom-0 top-[var(--site-header-height,4.25rem)] z-[55] border-0 bg-[rgba(20,8,40,0.58)] p-0 [-webkit-backdrop-filter:blur(8px)] [backdrop-filter:blur(8px)]';
+const MENU = 'm-0 mx-auto flex w-full max-w-lg list-none flex-col gap-1 p-0';
 const ROW =
-  'box-border flex h-[calc(var(--pn-h)_+_2px)] w-full cursor-pointer items-center gap-[10px] rounded-[18px] border-0 px-[16px] text-left [background:none] [font-family:inherit] text-[length:calc(var(--pn-font)_+_1px)] leading-none font-medium text-[var(--pn-strong)] no-underline outline-none transition-[background-color] duration-200 ease-[ease] [&_svg]:h-[1.15em] [&_svg]:w-[1.15em] [&_svg]:flex-none hover:[background:var(--pn-row-hover)] aria-[current=page]:[background:var(--pn-pill)] aria-[current=page]:[box-shadow:var(--pn-pill-shadow)] aria-[current=page]:text-[var(--pn-pill-ink)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[color:var(--pn-ring)] motion-reduce:transition-none';
+  'box-border flex min-h-12 w-full cursor-pointer items-center gap-[10px] rounded-2xl border-0 px-4 py-3.5 text-left [background:none] [font-family:inherit] text-[length:calc(var(--pn-font)_+_2px)] leading-none font-medium tracking-[-0.01em] text-[var(--pn-strong)] no-underline outline-none transition-[background-color,color,transform] duration-200 ease-[ease] [&_svg]:h-[1.15em] [&_svg]:w-[1.15em] [&_svg]:flex-none hover:[background:var(--pn-row-hover)] aria-[current=page]:[background:var(--pn-pill)] aria-[current=page]:[box-shadow:var(--pn-pill-shadow)] aria-[current=page]:!text-[var(--pn-pill-ink)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[color:var(--pn-ring)] motion-reduce:transition-none motion-safe:active:scale-[0.98]';
 const MEASURE = 'pointer-events-none invisible absolute left-0 top-0 flex gap-[2px]';
 
 const DEFAULT_ITEMS: PillNavItem[] = [
@@ -269,7 +271,8 @@ const PillNav = ({
   const slideRef = useRef(false);
   const pendingRef = useRef<boolean | null>(null);
   const [selected, setSelected] = useState(defaultActiveIndex);
-  const [collapsed, setCollapsed] = useState(collapse === 'always');
+  // Mobile-first: start collapsed for `auto` so SSR matches phones and avoids hydration flicker.
+  const [collapsed, setCollapsed] = useState(collapse !== 'never');
   const [open, setOpen] = useState(false);
   const [panelShown, setPanelShown] = useState(false);
 
@@ -292,7 +295,14 @@ const PillNav = ({
 
   const palette = THEMES[theme] ?? THEMES.dark;
   const vars: Record<string, string> = { ...palette, ...(SIZES[size] ?? SIZES.md) };
-  if (surface === 'glass') vars['--pn-blur'] = 'blur(20px) saturate(1.6)';
+  // Mobile sheet stays opaque even when the desktop bar is surface="none".
+  vars['--pn-panel'] = palette['--pn-solid'];
+  vars['--pn-panel-shadow'] =
+    '0 28px 48px -24px rgba(20, 8, 40, 0.72), 0 12px 24px -16px rgba(20, 8, 40, 0.4)';
+  if (surface === 'glass') {
+    vars['--pn-blur'] = 'blur(20px) saturate(1.6)';
+    vars['--pn-panel'] = palette['--pn-surface'];
+  }
   if (surface === 'solid') {
     vars['--pn-surface'] = palette['--pn-solid'];
     vars['--pn-blur'] = 'none';
@@ -698,29 +708,31 @@ const PillNav = ({
 
   useLayoutEffect(() => {
     const panel = panelRef.current;
-    const root = rootRef.current;
-    if (!panel || !root) return undefined;
+    if (!panel || !panelShown) return undefined;
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    const width = panel.offsetWidth;
-    const height = panel.offsetHeight;
-    const header = joined ? root.offsetHeight : (toggleRef.current?.offsetHeight ?? 44);
-    const start = joined
-      ? `inset(0px 0px ${Math.max(0, height - header)}px 0px round ${header / 2}px)`
-      : `inset(0px 0px ${Math.max(0, height - header)}px ${Math.max(0, width - header)}px round ${header / 2}px)`;
-    const end = 'inset(0px 0px 0px 0px round 24px)';
     const rows = panel.querySelectorAll('li');
     const running: Animation[] = [];
+    const openKeyframes = [
+      { opacity: 0, transform: 'translateY(-10px)' },
+      { opacity: 1, transform: 'translateY(0)' }
+    ];
     if (open) {
       if (reduce) return undefined;
-      running.push(panel.animate([{ clipPath: start }, { clipPath: end }], { duration: 560, easing: EASE_OUT }));
+      running.push(
+        panel.animate(openKeyframes, {
+          duration: 420,
+          easing: EASE_OUT,
+          fill: 'backwards'
+        })
+      );
       rows.forEach((row, index) => {
         running.push(
           row.animate(
             [
-              { opacity: 0, transform: 'translateY(-8px)' },
+              { opacity: 0, transform: 'translateY(-6px)' },
               { opacity: 1, transform: 'translateY(0)' }
             ],
-            { duration: 420, delay: 90 + index * 40, easing: EASE_OUT, fill: 'backwards' }
+            { duration: 360, delay: 60 + index * 36, easing: EASE_OUT, fill: 'backwards' }
           )
         );
       });
@@ -729,15 +741,21 @@ const PillNav = ({
         setPanelShown(false);
         return undefined;
       }
-      const morph = panel.animate([{ clipPath: end }, { clipPath: start }], {
-        duration: 380,
-        easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-        fill: 'forwards'
-      });
-      morph.onfinish = () => setPanelShown(false);
-      running.push(morph);
+      const close = panel.animate(
+        [
+          { opacity: 1, transform: 'translateY(0)' },
+          { opacity: 0, transform: 'translateY(-8px)' }
+        ],
+        {
+          duration: 240,
+          easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          fill: 'forwards'
+        }
+      );
+      close.onfinish = () => setPanelShown(false);
+      running.push(close);
       rows.forEach(row => {
-        running.push(row.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: 'forwards' }));
+        running.push(row.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, fill: 'forwards' }));
       });
     }
     return () => {
@@ -746,27 +764,24 @@ const PillNav = ({
         animation.cancel();
       });
     };
-  }, [open, panelShown, joined]);
+  }, [open, panelShown]);
 
   useEffect(() => {
     if (!open) return undefined;
-    const onPointerDown = (event: PointerEvent) => {
-      const target = event.target;
-      if (target instanceof Node && rootRef.current?.contains(target)) return;
-      setOpen(false);
-    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       setOpen(false);
+      onMenuToggle?.(false);
       toggleRef.current?.focus();
     };
-    document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
     return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
+      document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [open]);
+  }, [open, onMenuToggle]);
 
   const spin = (event: ReactPointerEvent) => {
     const mark = markRef.current;
@@ -908,29 +923,40 @@ const PillNav = ({
       )}
 
       {collapsed && panelShown && (
-        <div ref={panelRef} id={panelId} className={[PANEL, SURFACE].join(' ')}>
-          <ul className={MENU}>
-            {items.map((item, index) => (
-              <li key={`${item.label}-${index}`}>
-                {link(
-                  item,
-                  {
-                    className: ROW,
-                    'aria-current': index === activeIndex ? 'page' : undefined,
-                    tabIndex: open ? undefined : -1,
-                    onClick: event => {
-                      choose(item, index, event);
-                      setOpen(false);
-                      onMenuToggle?.(false);
-                    }
-                  },
-                  face(item)
-                )}
-              </li>
-            ))}
-          </ul>
-          <span className={RIM} />
-        </div>
+        <>
+          <button
+            type="button"
+            className={PANEL_BACKDROP}
+            aria-label="Close menu"
+            tabIndex={open ? undefined : -1}
+            onClick={() => {
+              setOpen(false);
+              onMenuToggle?.(false);
+            }}
+          />
+          <div ref={panelRef} id={panelId} className={PANEL} role="dialog" aria-modal="true" aria-label={ariaLabel}>
+            <ul className={MENU}>
+              {items.map((item, index) => (
+                <li key={`${item.label}-${index}`}>
+                  {link(
+                    item,
+                    {
+                      className: ROW,
+                      'aria-current': index === activeIndex ? 'page' : undefined,
+                      tabIndex: open ? undefined : -1,
+                      onClick: event => {
+                        choose(item, index, event);
+                        setOpen(false);
+                        onMenuToggle?.(false);
+                      }
+                    },
+                    face(item)
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
       )}
 
       <div ref={measureRef} className={MEASURE} aria-hidden="true">
